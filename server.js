@@ -11,9 +11,7 @@ app.post("/create-checkout-session", async (req, res) => {
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       payment_method_types: [
-        "card",
-        "affirm",
-        "klarna"
+        "card"
       ],
       billing_address_collection: "required",
       line_items: [
