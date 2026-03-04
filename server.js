@@ -10,6 +10,12 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 app.post("/create-checkout-session", async (req, res) => {
   try {
+    const { price_id } = req.body;
+
+    if (!price_id) {
+      return res.status(400).json({ error: "Missing price_id" });
+    }
+
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
 
@@ -29,7 +35,7 @@ app.post("/create-checkout-session", async (req, res) => {
 
       line_items: [
         {
-          price: "price_1T5LBwP0O1T3MgmrkdwIup6X",
+          price: price_id,
           quantity: 1
         }
       ],
@@ -40,6 +46,7 @@ app.post("/create-checkout-session", async (req, res) => {
 
     res.json({ url: session.url });
   } catch (error) {
+    console.error("Stripe error:", error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -48,3 +55,4 @@ const PORT = process.env.PORT || 4242;
 app.listen(PORT, () => {
   console.log(`Servidor corriendo en puerto ${PORT}`);
 });
+
