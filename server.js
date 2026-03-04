@@ -13,8 +13,7 @@ app.post("/create-checkout-session", async (req, res) => {
       payment_method_types: [
         "card",
         "affirm",
-        "klarna",
-        "us_bank_account"
+        "klarna"
       ],
       billing_address_collection: "required",
       line_items: [
@@ -43,4 +42,5 @@ const PORT = process.env.PORT || 4242;
 app.listen(PORT, () => {
   console.log(`Servidor corriendo en puerto ${PORT}`);
 });
+
 
