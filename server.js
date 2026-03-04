@@ -8,6 +8,10 @@ app.use(express.json());
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
+app.get("/", (req, res) => {
+  res.send("Green Power Tech Backend is running");
+});
+
 app.post("/create-checkout-session", async (req, res) => {
   try {
     const { price_id } = req.body;
@@ -55,4 +59,3 @@ const PORT = process.env.PORT || 4242;
 app.listen(PORT, () => {
   console.log(`Servidor corriendo en puerto ${PORT}`);
 });
-
