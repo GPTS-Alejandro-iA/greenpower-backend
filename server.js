@@ -28,8 +28,8 @@ app.post("/create-checkout-session", async (req, res) => {
           quantity: 1
         }
       ],
-      success_url: "https://greenpowertech.store/success",
-      cancel_url: "https://greenpowertech.store/cancel"
+      success_url: "https://greenpowertech.store",
+      cancel_url: "https://greenpowertech.store"
     });
 
     res.json({ url: session.url });
