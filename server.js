@@ -33,7 +33,7 @@ app.post("/create-checkout-session", async (req, res) => {
       // Producto con PRICE ID FIJO (NO dinámico)
       line_items: [
         {
-          price: "price_XXXXXXXXXXXX", // ← reemplaza con tu Price ID real
+          price: "price_1T5LBwP0O1T3MgmrkdwIup6X", // ← reemplaza con tu Price ID real
           quantity: 1
         }
       ],
