@@ -1,0 +1,16 @@
+{
+  "name": "greenpower-backend",
+  "version": "1.0.0",
+  "description": "Backend para Stripe Checkout con Affirm, Klarna, tarjetas, ACH, transferencias bancarias, Apple Pay y Google Pay",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "author": "Green Power Tech Store",
+  "license": "UNLICENSED",
+  "type": "commonjs",
+  "dependencies": {
+    "express": "^5.2.1",
+    "stripe": "^20.4.0"
+  }
+}
