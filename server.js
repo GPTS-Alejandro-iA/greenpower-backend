@@ -10,22 +10,34 @@ app.post("/create-checkout-session", async (req, res) => {
   try {
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
+
+      // Métodos de pago explícitos (estables para PR)
       payment_method_types: [
-        "card"
+        "card",
+        "affirm",
+        "klarna",
+        "amazon_pay"
       ],
+
+      // País fijo en Estados Unidos
+      shipping_address_collection: {
+        allowed_countries: ["US"]
+      },
+
+      // Dirección de facturación con checkbox "Same as shipping"
       billing_address_collection: "required",
+
+      // Idioma automático ES / EN
+      locale: "auto",
+
+      // Producto con PRICE ID FIJO (NO dinámico)
       line_items: [
         {
-          price_data: {
-            currency: "usd",
-            product_data: {
-              name: "Green Power Tech Store – Producto"
-            },
-            unit_amount: 10000
-          },
+          price: "price_XXXXXXXXXXXX", // ← reemplaza con tu Price ID real
           quantity: 1
         }
       ],
+
       success_url: "https://greenpowertech.store",
       cancel_url: "https://greenpowertech.store"
     });
@@ -40,5 +52,6 @@ const PORT = process.env.PORT || 4242;
 app.listen(PORT, () => {
   console.log(`Servidor corriendo en puerto ${PORT}`);
 });
+
 
 
