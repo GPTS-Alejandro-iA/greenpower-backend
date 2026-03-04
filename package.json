@@ -11,6 +11,8 @@
   "type": "commonjs",
   "dependencies": {
     "express": "^5.2.1",
-    "stripe": "^20.4.0"
+    "stripe": "^20.4.0",
+    "cors": "^2.8.5"
   }
 }
+
