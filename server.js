@@ -40,13 +40,14 @@ app.post("/create-payment-intent", async (req, res) => {
         "us_bank_account"
       ],
 
+      // 🔥 ESTE return_url SÍ ES VÁLIDO
       return_url: "https://greenpowertech.store/pages/thank-you",
 
+      // 🔥 Affirm YA NO PERMITE return_url AQUÍ
       payment_method_options: {
         affirm: {
           capture_method: "automatic",
-          preferred_locale: "en-US",
-          return_url: "https://greenpowertech.store/pages/thank-you"
+          preferred_locale: "en-US"
         }
       }
     });
@@ -67,3 +68,4 @@ const PORT = process.env.PORT;
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`Backend running on port ${PORT}`);
 });
+
