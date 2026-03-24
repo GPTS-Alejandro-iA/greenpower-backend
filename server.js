@@ -4,10 +4,20 @@ const cors = require("cors");
 const Stripe = require("stripe");
 
 const app = express();
-app.use(cors());
+
+// CORS para Shopify
+app.use(cors({
+  origin: [
+    "https://greenpowertech.store",
+    "https://www.greenpowertech.store"
+  ],
+  methods: ["GET", "POST"],
+  allowedHeaders: ["Content-Type"]
+}));
+
 app.use(express.json());
 
-// 🔥 ESTA LÍNEA ES CRÍTICA PARA SERVIR checkout.html
+// Servir checkout.html
 app.use(express.static("public"));
 
 const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
@@ -24,7 +34,6 @@ app.post("/create-payment-intent", async (req, res) => {
       receipt_email: customer_email,
       metadata,
 
-      // Métodos de pago permitidos
       payment_method_types: [
         "card",
         "affirm",
@@ -33,12 +42,18 @@ app.post("/create-payment-intent", async (req, res) => {
         "us_bank_account"
       ],
 
-      // Configuración especial para Affirm
+      // 🔥 CONFIGURACIÓN CORRECTA PARA AFFIRM
       payment_method_options: {
         affirm: {
-          capture_method: "automatic"
+          capture_method: "automatic",
+          preferred_locale: "en-US",
+          // 🔥 ESTA LÍNEA ES LA QUE EVITA EL REBOTE
+          return_url: "https://greenpowertech.store/pages/thank-you"
         }
-      }
+      },
+
+      // 🔥 IMPORTANTE PARA MÉTODOS BNPL
+      return_url: "https://greenpowertech.store/pages/thank-you"
     });
 
     res.json({
