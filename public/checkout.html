@@ -26,10 +26,13 @@
 
     async function initialize() {
 
-      // 🔥🔥🔥 RUTA CORRECTA AL BACKEND 🔥🔥🔥
+      // 🔥 FETCH CORREGIDO — ESTE ES EL CAMBIO REAL
       const response = await fetch("https://greenpower-backend.onrender.com/create-payment-intent", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
         body: JSON.stringify({
           amount: 336895,
           currency: "usd",
@@ -53,7 +56,6 @@
         const { error } = await stripe.confirmPayment({
           elements,
           confirmParams: {
-            // 🔥 Stripe vuelve aquí después de Affirm/Klarna
             return_url: window.location.href
           }
         });
