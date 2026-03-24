@@ -5,7 +5,6 @@ const Stripe = require("stripe");
 
 const app = express();
 
-// CORS para Shopify
 app.use(cors({
   origin: [
     "https://greenpowertech.store",
@@ -16,13 +15,10 @@ app.use(cors({
 }));
 
 app.use(express.json());
-
-// Servir checkout.html
 app.use(express.static("public"));
 
 const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
 
-// Crear PaymentIntent para Payment Element
 app.post("/create-payment-intent", async (req, res) => {
   try {
     const { amount, currency, customer_email, description, metadata } = req.body;
@@ -42,18 +38,17 @@ app.post("/create-payment-intent", async (req, res) => {
         "us_bank_account"
       ],
 
-      // 🔥 CONFIGURACIÓN CORRECTA PARA AFFIRM
+      // 🔥 ESTA ES LA CLAVE PARA QUE AFFIRM NO REBOTE
+      return_url: "https://greenpowertech.store/pages/thank-you",
+
       payment_method_options: {
         affirm: {
           capture_method: "automatic",
           preferred_locale: "en-US",
-          // 🔥 ESTA LÍNEA ES LA QUE EVITA EL REBOTE
+          // 🔥 Affirm NECESITA ESTO para completar el flujo
           return_url: "https://greenpowertech.store/pages/thank-you"
         }
-      },
-
-      // 🔥 IMPORTANTE PARA MÉTODOS BNPL
-      return_url: "https://greenpowertech.store/pages/thank-you"
+      }
     });
 
     res.json({
@@ -66,6 +61,5 @@ app.post("/create-payment-intent", async (req, res) => {
   }
 });
 
-// Puerto
 const PORT = process.env.PORT || 4242;
 app.listen(PORT, () => console.log(`Backend running on port ${PORT}`));
