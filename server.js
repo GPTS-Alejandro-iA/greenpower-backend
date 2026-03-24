@@ -5,10 +5,12 @@ const Stripe = require("stripe");
 
 const app = express();
 
+// 🔥 CORS CORREGIDO — AGREGO TU BACKEND
 app.use(cors({
   origin: [
     "https://greenpowertech.store",
-    "https://www.greenpowertech.store"
+    "https://www.greenpowertech.store",
+    "https://greenpower-backend.onrender.com"
   ],
   methods: ["GET", "POST"],
   allowedHeaders: ["Content-Type"]
@@ -38,14 +40,12 @@ app.post("/create-payment-intent", async (req, res) => {
         "us_bank_account"
       ],
 
-      // 🔥 ESTA ES LA CLAVE PARA QUE AFFIRM NO REBOTE
       return_url: "https://greenpowertech.store/pages/thank-you",
 
       payment_method_options: {
         affirm: {
           capture_method: "automatic",
           preferred_locale: "en-US",
-          // 🔥 Affirm NECESITA ESTO para completar el flujo
           return_url: "https://greenpowertech.store/pages/thank-you"
         }
       }
@@ -61,6 +61,7 @@ app.post("/create-payment-intent", async (req, res) => {
   }
 });
 
+// 🔥 PUERTO CORRECTO PARA RENDER
 const PORT = process.env.PORT;
 
 app.listen(PORT, "0.0.0.0", () => {
