@@ -22,7 +22,7 @@
   </form>
 
   <script>
-    const stripe = Stripe("TU_PUBLIC_KEY_AQUI"); // <-- Reemplaza esto
+    const stripe = Stripe(pk_live_51QbAfoP0O1T3MgmrNK5hRYACN0QBYoPKv7LJLe49ry9j0yWiyAJXmKVPFSPstC6NSUUszK8KOEy6RdiZI4nJSfYZ002Txanj0Y); // <-- Reemplaza esto
 
     async function initialize() {
       const response = await fetch("/create-payment-intent", {
