@@ -1,4 +1,3 @@
-// server.js
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
@@ -7,6 +6,9 @@ const Stripe = require("stripe");
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+// 🔥 ESTA LÍNEA ES CRÍTICA PARA SERVIR checkout.html
+app.use(express.static("public"));
 
 const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
 
@@ -22,7 +24,7 @@ app.post("/create-payment-intent", async (req, res) => {
       receipt_email: customer_email,
       metadata,
 
-      // 🔥 Aquí activamos Affirm correctamente
+      // Métodos de pago permitidos
       payment_method_types: [
         "card",
         "affirm",
@@ -31,7 +33,7 @@ app.post("/create-payment-intent", async (req, res) => {
         "us_bank_account"
       ],
 
-      // 🔥 Requerido para Affirm en PR
+      // Configuración especial para Affirm
       payment_method_options: {
         affirm: {
           capture_method: "automatic"
