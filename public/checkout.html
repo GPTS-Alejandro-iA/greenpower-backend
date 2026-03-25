@@ -26,7 +26,11 @@
 
     async function initialize() {
 
-      // 🔥 FETCH CORREGIDO — ESTE ES EL CAMBIO REAL
+      // ⭐ AQUÍ DEFINES EL PRODUCTO Y EL PRECIO
+      const productPrice = 336895; // <-- CAMBIAR DINÁMICAMENTE SI QUIERES
+      const productId = "ark3600";
+
+      // ⭐ CREA EL PAYMENT INTENT CON AUTOMATIC PAYMENT METHODS
       const response = await fetch("https://greenpower-backend.onrender.com/create-payment-intent", {
         method: "POST",
         headers: { 
@@ -34,29 +38,44 @@
           "Accept": "application/json"
         },
         body: JSON.stringify({
-          amount: 336895,
+          amount: productPrice,
           currency: "usd",
-          customer_email: "cliente@example.com",
           description: "Compra Green Power",
-          metadata: { product_id: "ark3600" }
+          metadata: { product_id: productId },
+
+          // ⭐ FORZAMOS PAÍS/ESTADO PARA QUE AFFIRM/KLARNA NUNCA DESAPAREZCAN
+          billing_details: {
+            address: {
+              country: "US",
+              state: "PR",
+              postal_code: "00901"
+            }
+          }
         })
       });
 
       const { clientSecret } = await response.json();
 
-      const elements = stripe.elements({ clientSecret });
+      // ⭐ ELEMENTS CONFIGURADO PARA MÉTODOS AVANZADOS
+      const elements = stripe.elements({
+        clientSecret,
+        appearance: {
+          theme: "stripe"
+        }
+      });
+
       const paymentElement = elements.create("payment");
       paymentElement.mount("#payment-element");
 
       document.querySelector("#payment-form").addEventListener("submit", async (e) => {
         e.preventDefault();
-
         document.querySelector("#submit").disabled = true;
 
+        // ⭐ AQUÍ SE CORRIGE EL LOOP DE AFFIRM/KLARNA
         const { error } = await stripe.confirmPayment({
           elements,
           confirmParams: {
-            return_url: window.location.href
+            return_url: "https://greenpowertech.store/pages/confirmacion" // ⭐ URL FINAL REAL
           }
         });
 
