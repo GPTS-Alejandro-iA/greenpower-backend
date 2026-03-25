@@ -11,40 +11,43 @@ app.use(express.json());
 
 const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
 
-// ⭐ CREA SESSION DE STRIPE CHECKOUT USANDO price_id + quantity
-app.post("/create-checkout-session", async (req, res) => {
+// ⭐ CREA PAYMENT INTENT USANDO price_id
+app.post("/create-payment-intent", async (req, res) => {
   try {
-    const { price_id, product_name, quantity } = req.body;
+    const { price_id, product_name, state, zip } = req.body;
 
     if (!price_id) {
       return res.status(400).json({ error: "Falta price_id" });
     }
 
-    const session = await stripe.checkout.sessions.create({
-      mode: "payment",
+    // ⭐ OBTENER EL MONTO REAL DESDE price_id
+    const price = await stripe.prices.retrieve(price_id);
 
-      line_items: [
-        {
-          price: price_id,
-          quantity: quantity || 1   // ⭐ Tú decides si permites cantidad
-        }
-      ],
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: price.unit_amount,
+      currency: "usd",
 
-      // ⭐ Stripe maneja Affirm, Klarna, Afterpay, etc.
-      success_url: "https://greenpowertech.store/pages/confirmacion?session_id={CHECKOUT_SESSION_ID}",
-      cancel_url: "https://greenpowertech.store/products",
+      // ⭐ NECESARIO PARA Affirm, Klarna, Afterpay, Apple Pay, Google Pay
+      automatic_payment_methods: { enabled: true },
 
       metadata: {
         product_name: product_name || "Producto",
-        price_id,
-        quantity: quantity || 1
+        price_id
+      },
+
+      shipping: {
+        address: {
+          country: "US",
+          state: state || "FL",
+          postal_code: zip || "00901"
+        }
       }
     });
 
-    res.json({ url: session.url });
+    res.json({ clientSecret: paymentIntent.client_secret });
 
   } catch (error) {
-    console.error("Error creando Checkout Session:", error);
+    console.error("Error creando PaymentIntent:", error);
     res.status(500).json({ error: error.message });
   }
 });
