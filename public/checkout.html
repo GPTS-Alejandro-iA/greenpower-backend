@@ -1,9 +1,10 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
   <meta charset="utf-8" />
   <title>Green Power Checkout</title>
   <script src="https://js.stripe.com/v3/"></script>
+
   <style>
     body { font-family: Arial; max-width: 600px; margin: 40px auto; }
     #payment-element { margin-bottom: 24px; }
@@ -12,6 +13,7 @@
     select, input { width: 100%; padding: 10px; margin-bottom: 12px; }
   </style>
 </head>
+
 <body>
 
   <h2>Completar Pago</h2>
@@ -82,33 +84,24 @@
   <script>
     const stripe = Stripe("pk_live_51QbAfoP0O1T3MgmrNK5hRYACN0QBYoPKv7LJLe49ry9j0yWiyAJXmKVPFSPstC6NSUUszK8KOEy6RdiZI4nJSfYZ002Txanj0Y");
 
-    async function initialize() {
+    // ⭐ LEE price_id DESDE LA URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const priceId = urlParams.get("price_id");
+    const productName = urlParams.get("name") || "Producto";
 
-      const productPrice = 336895;
-      const productId = "ark3600";
+    async function initialize() {
 
       const state = document.querySelector("#state").value;
       const zip = document.querySelector("#zip").value || "00901";
 
       const response = await fetch("https://greenpower-backend.onrender.com/create-payment-intent", {
         method: "POST",
-        headers: { 
-          "Content-Type": "application/json",
-          "Accept": "application/json"
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          amount: productPrice,
-          currency: "usd",
-          description: "Compra Green Power",
-          metadata: { product_id: productId },
-
-          billing_details: {
-            address: {
-              country: "US",
-              state: state,
-              postal_code: zip
-            }
-          }
+          price_id: priceId,
+          product_name: productName,
+          state,
+          zip
         })
       });
 
@@ -116,6 +109,7 @@
 
       const elements = stripe.elements({
         clientSecret,
+        locale: "auto", // ⭐ IDIOMA AUTOMÁTICO
         appearance: { theme: "stripe" }
       });
 
