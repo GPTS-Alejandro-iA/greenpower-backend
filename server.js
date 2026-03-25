@@ -1,31 +1,61 @@
+// server.js - GREENPOWER BACKEND (corregido para Render + Shopify + Stripe)
 import express from "express";
 import Stripe from "stripe";
 import cors from "cors";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 const app = express();
+const PORT = process.env.PORT || 10000;   // Render usa process.env.PORT (normalmente 10000)
 
-// CORS CORRECTO PARA SHOPIFY
-app.use(cors({
+// ✅ CORS ROBUSTO PARA SHOPIFY CHECKOUT (incluye preflight OPTIONS)
+const corsOptions = {
   origin: [
     "https://greenpowertech.store",
     "https://www.greenpowertech.store",
-    "https://checkout.greenpowertech.store"
+    "https://checkout.greenpowertech.store",
+    "https://cdn.shopify.com"   // importante para UI Extensions
   ],
-  methods: ["GET", "POST"],
-  allowedHeaders: ["Content-Type", "Accept"]
-}));
+  methods: ["GET", "POST", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Accept", "Authorization"],
+  credentials: true,
+  optionsSuccessStatus: 204
+};
+
+app.use(cors(corsOptions));
+
+// Manejo explícito de preflight OPTIONS (Shopify lo necesita)
+app.options("*", cors(corsOptions));
 
 app.use(express.json());
 
 // STRIPE
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
-// ENDPOINT PRINCIPAL
+// Health check (para confirmar que el servidor está vivo en Render)
+app.get("/", (req, res) => {
+  console.log("✅ GET / - Servidor vivo");
+  res.send("GreenPower Backend is alive 🚀");
+});
+
+// Ruta de prueba GET
+app.get("/create-payment-intent", (req, res) => {
+  console.log("⚠️  GET /create-payment-intent recibido (usa POST)");
+  res.send("Este endpoint requiere POST");
+});
+
+// === ENDPOINT PRINCIPAL ===
 app.post("/create-payment-intent", async (req, res) => {
+  console.log("🔥 POST /create-payment-intent RECIBIDO");
+  console.log("Body:", req.body);
+  console.log("Origin:", req.headers.origin);
+
   try {
     const { price_id, state, zip } = req.body;
 
     if (!price_id) {
+      console.error("❌ Falta price_id");
       return res.status(400).json({ error: "Falta price_id" });
     }
 
@@ -34,7 +64,7 @@ app.post("/create-payment-intent", async (req, res) => {
     const paymentIntent = await stripe.paymentIntents.create({
       amount: price.unit_amount,
       currency: "usd",
-      payment_method_types: ["card", "affirm", "klarna"],
+      automatic_payment_methods: { enabled: true },   // ✅ Mejor para Affirm + Klarna + tarjeta
       shipping: {
         name: "Cliente",
         address: {
@@ -48,16 +78,21 @@ app.post("/create-payment-intent", async (req, res) => {
       metadata: { price_id }
     });
 
+    console.log("✅ PaymentIntent creado:", paymentIntent.id);
     res.json({ clientSecret: paymentIntent.client_secret });
 
   } catch (error) {
-    console.error("Error creando PaymentIntent:", error);
+    console.error("❌ Error creando PaymentIntent:", error.message);
     res.status(500).json({ error: error.message });
   }
 });
 
-// *** PUERTO CORRECTO PARA RENDER — SIN FALLBACK ***
-const PORT = process.env.PORT;
-app.listen(PORT, () => {
-  console.log(`Backend running on port ${PORT}`);
+// Catch-all para debug
+app.use((req, res) => {
+  console.log(`🚨 Request no manejado: ${req.method} ${req.path}`);
+  res.status(404).json({ error: "Not found" });
+});
+
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`🚀 Servidor corriendo en puerto ${PORT} → https://greenpower-backend.onrender.com`);
 });
