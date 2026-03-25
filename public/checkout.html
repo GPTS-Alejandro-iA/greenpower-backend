@@ -4,6 +4,7 @@
   <meta charset="utf-8" />
   <title>Green Power Tech Store - Checkout</title>
   <script src="https://js.stripe.com/v3/"></script>
+
   <style>
     body { 
       font-family: Arial, sans-serif; 
@@ -48,9 +49,9 @@
       margin-top: 12px; 
       font-weight: bold;
     }
-    .loading { opacity: 0.7; }
   </style>
 </head>
+
 <body>
   <h2>Completar tu pago</h2>
 
@@ -78,7 +79,6 @@
     <option value="AL">Alabama</option>
     <option value="AR">Arkansas</option>
     <option value="AZ">Arizona</option>
-    <!-- ... resto de estados ... -->
     <option value="WY">Wyoming</option>
   </select>
 
@@ -96,6 +96,20 @@
     </form>
   </div>
 
+  <!-- ⭐ FIX CRÍTICO: REATACHAR EVENTO DESPUÉS DE QUE SHOPIFY REESCRIBE EL DOM -->
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const btn = document.getElementById("continue-btn");
+      if (btn) {
+        btn.addEventListener("click", async () => {
+          const success = await createPaymentIntent();
+          if (!success) btn.disabled = false;
+        });
+      }
+    });
+  </script>
+
+  <!-- ⭐ SCRIPT PRINCIPAL -->
   <script>
     const stripe = Stripe("pk_live_51QbAfoP0O1T3MgmrNK5hRYACN0QBYoPKv7LJLe49ry9j0yWiyAJXmKVPFSPstC6NSUUszK8KOEy6RdiZI4nJSfYZ002Txanj0Y");
 
@@ -117,8 +131,9 @@
         return false;
       }
 
-      document.getElementById("continue-btn").disabled = true;
-      document.getElementById("continue-btn").textContent = "Procesando...";
+      const btn = document.getElementById("continue-btn");
+      btn.disabled = true;
+      btn.textContent = "Procesando...";
 
       try {
         const response = await fetch("https://greenpower-backend.onrender.com/create-payment-intent", {
@@ -137,49 +152,36 @@
         const data = await response.json();
 
         if (!response.ok || !data.clientSecret) {
-          document.getElementById("error-message").textContent = data.error || "Error al crear el pago. Inténtalo de nuevo.";
+          document.getElementById("error-message").textContent = data.error || "Error al crear el pago.";
           return false;
         }
 
         clientSecret = data.clientSecret;
 
-        // Mostrar sección de pago
         document.getElementById("payment-section").style.display = "block";
-        document.getElementById("continue-btn").style.display = "none";
+        btn.style.display = "none";
 
-        // Crear Elements
         elements = stripe.elements({
           clientSecret,
-          locale: "es",           // mejor experiencia en español
+          locale: "es",
           appearance: { theme: "stripe" }
         });
 
-        const paymentElement = elements.create("payment", {
-          layout: "tabs"          // o "accordion"
-        });
+        const paymentElement = elements.create("payment", { layout: "tabs" });
         paymentElement.mount("#payment-element");
 
         return true;
 
       } catch (err) {
         console.error(err);
-        document.getElementById("error-message").textContent = "Error de conexión con el servidor. Inténtalo de nuevo.";
+        document.getElementById("error-message").textContent = "Error de conexión.";
         return false;
       } finally {
-        document.getElementById("continue-btn").disabled = false;
-        document.getElementById("continue-btn").textContent = "Continuar al pago seguro";
+        btn.disabled = false;
+        btn.textContent = "Continuar al pago seguro";
       }
     }
 
-    // Evento del botón "Continuar al pago"
-    document.getElementById("continue-btn").addEventListener("click", async () => {
-      const success = await createPaymentIntent();
-      if (!success) {
-        document.getElementById("continue-btn").disabled = false;
-      }
-    });
-
-    // Submit del formulario de pago
     document.getElementById("payment-form").addEventListener("submit", async (e) => {
       e.preventDefault();
 
@@ -224,5 +226,6 @@
       }
     });
   </script>
+
 </body>
 </html>
