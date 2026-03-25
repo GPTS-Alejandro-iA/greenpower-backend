@@ -26,10 +26,11 @@ app.post("/create-checkout-session", async (req, res) => {
       line_items: [
         {
           price: price_id,
-          quantity: quantity || 1
+          quantity: quantity || 1   // ⭐ Tú decides si permites cantidad
         }
       ],
 
+      // ⭐ Stripe maneja Affirm, Klarna, Afterpay, etc.
       success_url: "https://greenpowertech.store/pages/confirmacion?session_id={CHECKOUT_SESSION_ID}",
       cancel_url: "https://greenpowertech.store/products",
 
