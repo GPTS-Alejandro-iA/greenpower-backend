@@ -5,7 +5,11 @@ const Stripe = require("stripe");
 
 const app = express();
 
-app.use(cors());
+// ⭐ Configurar CORS para permitir tu dominio de Shopify
+app.use(cors({
+  origin: process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : '*',
+  credentials: true
+}));
 app.use(express.json());
 
 const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
@@ -28,7 +32,7 @@ app.post("/create-payment-intent", async (req, res) => {
     const paymentIntent = await stripe.paymentIntents.create({
       amount: price.unit_amount,
       currency: price.currency,
-      payment_method_types: ["card", "affirm", "klarna"], // ⭐ CLAVE
+      payment_method_types: ["card", "affirm", "klarna"], // ⭐ CLAVE: Desactiva métodos dinámicos
       metadata: {
         price_id,
         state,
@@ -42,6 +46,11 @@ app.post("/create-payment-intent", async (req, res) => {
     console.error("Error creando Payment Intent:", error);
     res.status(500).json({ error: error.message });
   }
+});
+
+// ⭐ Endpoint de salud para verificar que el servidor está funcionando
+app.get("/health", (req, res) => {
+  res.json({ status: "ok" });
 });
 
 const PORT = process.env.PORT || 10000;
