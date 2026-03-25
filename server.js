@@ -4,6 +4,7 @@ import cors from "cors";
 
 const app = express();
 
+// CORS CORRECTO PARA SHOPIFY
 app.use(cors({
   origin: [
     "https://greenpowertech.store",
@@ -16,8 +17,10 @@ app.use(cors({
 
 app.use(express.json());
 
+// STRIPE
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
+// ENDPOINT PRINCIPAL
 app.post("/create-payment-intent", async (req, res) => {
   try {
     const { price_id, state, zip } = req.body;
@@ -53,8 +56,8 @@ app.post("/create-payment-intent", async (req, res) => {
   }
 });
 
-// ⭐ ESTA ES LA LÍNEA QUE ARREGLA TODO
-const PORT = process.env.PORT || 10000;
-app.listen(PORT, "0.0.0.0", () => {
+// *** PUERTO CORRECTO PARA RENDER — SIN FALLBACK ***
+const PORT = process.env.PORT;
+app.listen(PORT, () => {
   console.log(`Backend running on port ${PORT}`);
 });
