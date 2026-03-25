@@ -18,12 +18,12 @@ app.use(cors({
 // Parseo JSON
 app.use(express.json());
 
-// ⭐ SIRVE ARCHIVOS ESTÁTICOS (AQUÍ VIVE checkout.html)
+// ⭐ SIRVE checkout.html y todo lo que esté en /public
 app.use(express.static("public"));
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
-// Handler reutilizable para crear PaymentIntent
+// ⭐ PAYMENT INTENT (ESTE ES EL QUE ACTIVA AFFIRM)
 async function createPaymentIntentHandler(req, res) {
   try {
     const { price_id, state, zip } = req.body;
@@ -58,20 +58,19 @@ async function createPaymentIntentHandler(req, res) {
   }
 }
 
-// Tu endpoint original para el checkout custom
+// ⭐ TU ENDPOINT REAL
 app.post("/create-payment-intent", createPaymentIntentHandler);
 
-// Endpoint extra para cubrir cualquier llamada a /create-checkout-session
+// ⭐ PARA CUBRIR CUALQUIER LLAMADA VIEJA DE SHOPIFY
 app.post("/create-checkout-session", createPaymentIntentHandler);
 
 // Salud
 app.get("/", (req, res) => {
-  console.log("✅ GET / - Servidor vivo");
   res.send("Backend OK");
 });
 
 // Puerto
 const PORT = process.env.PORT || 10000;
-app.listen(PORT, () => {
-  console.log(`🚀 Servidor corriendo en puerto ${PORT} → https://greenpower-backend.onrender.com`);
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`Backend running on port ${PORT}`);
 });
