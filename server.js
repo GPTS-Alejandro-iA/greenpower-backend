@@ -1,4 +1,4 @@
-// server.js - GREENPOWER BACKEND (Express 4 + Render + Shopify + Stripe)
+// server.js - GREENPOWER BACKEND (Express 4 - estable)
 import express from "express";
 import Stripe from "stripe";
 import cors from "cors";
@@ -9,7 +9,7 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 10000;
 
-// ✅ CORS ROBUSTO PARA SHOPIFY (Express 4)
+// ✅ CORS para Shopify + Render
 const corsOptions = {
   origin: [
     "https://greenpowertech.store",
@@ -25,7 +25,7 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 
-// Preflight OPTIONS para todo (funciona perfectamente en Express 4)
+// Preflight OPTIONS (Express 4)
 app.options("*", cors(corsOptions));
 
 app.use(express.json());
@@ -39,23 +39,21 @@ app.get("/", (req, res) => {
   res.send("GreenPower Backend is alive 🚀");
 });
 
-// Ruta de prueba GET
+// Ruta de prueba
 app.get("/create-payment-intent", (req, res) => {
-  console.log("⚠️  GET /create-payment-intent recibido (usa POST)");
+  console.log("⚠️  GET /create-payment-intent (usa POST)");
   res.send("Este endpoint requiere POST");
 });
 
-// === ENDPOINT PRINCIPAL ===
+// ENDPOINT PRINCIPAL
 app.post("/create-payment-intent", async (req, res) => {
   console.log("🔥 POST /create-payment-intent RECIBIDO");
   console.log("Body:", req.body);
-  console.log("Origin:", req.headers.origin);
 
   try {
     const { price_id, state, zip } = req.body;
 
     if (!price_id) {
-      console.error("❌ Falta price_id");
       return res.status(400).json({ error: "Falta price_id" });
     }
 
@@ -87,7 +85,7 @@ app.post("/create-payment-intent", async (req, res) => {
   }
 });
 
-// Catch-all para debug (último)
+// Catch-all
 app.use((req, res) => {
   console.log(`🚨 Request no manejado: ${req.method} ${req.path}`);
   res.status(404).json({ error: "Not found" });
