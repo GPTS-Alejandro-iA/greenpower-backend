@@ -4,7 +4,7 @@ import cors from "cors";
 
 const app = express();
 
-// CORS abierto solo a tus dominios
+// CORS solo para tus dominios
 app.use(cors({
   origin: [
     "https://greenpowertech.store",
@@ -19,7 +19,7 @@ app.use(express.json());
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
-// Handler reutilizable
+// Handler reutilizable para crear PaymentIntent
 async function createPaymentIntentHandler(req, res) {
   try {
     const { price_id, state, zip } = req.body;
@@ -47,17 +47,17 @@ async function createPaymentIntentHandler(req, res) {
       metadata: { price_id }
     });
 
-    res.json({ clientSecret: paymentIntent.client_secret });
+    return res.json({ clientSecret: paymentIntent.client_secret });
   } catch (error) {
     console.error("Error creando PaymentIntent:", error);
-    res.status(500).json({ error: error.message });
+    return res.status(500).json({ error: error.message });
   }
 }
 
 // Tu endpoint original para el checkout custom
 app.post("/create-payment-intent", createPaymentIntentHandler);
 
-// Endpoint extra para cubrir lo que está tirando Shopify (/create-checkout-session)
+// Endpoint extra para cubrir cualquier llamada a /create-checkout-session
 app.post("/create-checkout-session", createPaymentIntentHandler);
 
 // Salud
@@ -66,7 +66,7 @@ app.get("/", (req, res) => {
   res.send("Backend OK");
 });
 
-// Puerto (dejamos el 10000 como lo tienes ahora mismo)
+// Puerto
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
   console.log(`🚀 Servidor corriendo en puerto ${PORT} → https://greenpower-backend.onrender.com`);
