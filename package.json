@@ -1,7 +1,13 @@
 {
   "name": "greenpower-backend",
   "version": "1.0.0",
+  "description": "Backend de Green Power Tech Store para Stripe Payment Element",
   "main": "server.js",
+  "type": "commonjs",
+  "license": "UNLICENSED",
+  "engines": {
+    "node": ">=18"
+  },
   "scripts": {
     "start": "node server.js"
   },
