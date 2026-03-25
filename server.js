@@ -8,10 +8,9 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// ⭐ Stripe
 const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
 
-// ⭐ NUEVO MÉTODO: Payment Intent basado en price_id
+// ⭐ Payment Intent con métodos manuales (NO dinámicos)
 app.post("/create-payment-intent", async (req, res) => {
   try {
     const { price_id, state, zip } = req.body;
@@ -20,16 +19,16 @@ app.post("/create-payment-intent", async (req, res) => {
       return res.status(400).json({ error: "Falta price_id" });
     }
 
-    // Obtener precio desde Stripe (Stripe es la verdad absoluta)
+    // Obtener el precio desde Stripe
     const price = await stripe.prices.retrieve(price_id, {
       expand: ["product"]
     });
 
-    // Crear PaymentIntent
+    // Crear PaymentIntent con métodos manuales
     const paymentIntent = await stripe.paymentIntents.create({
       amount: price.unit_amount,
       currency: price.currency,
-      automatic_payment_methods: { enabled: true },
+      payment_method_types: ["card", "affirm", "klarna"], // ⭐ CLAVE
       metadata: {
         price_id,
         state,
@@ -45,7 +44,6 @@ app.post("/create-payment-intent", async (req, res) => {
   }
 });
 
-// ⭐ Puerto
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`Backend running on port ${PORT}`);
