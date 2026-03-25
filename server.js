@@ -5,44 +5,52 @@ const Stripe = require("stripe");
 
 const app = express();
 
-// ⭐ Configurar CORS para permitir tu dominio de Shopify
-app.use(cors({
-  origin: process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : '*',
-  credentials: true
-}));
+app.use(cors());
 app.use(express.json());
 
 const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
 
-// ⭐ Payment Intent con métodos manuales (NO dinámicos)
+// ⭐ PaymentIntent FINAL con shipping + métodos manuales
 app.post("/create-payment-intent", async (req, res) => {
   try {
-    const { price_id, name, address_line1, city, state, zip } = req.body;
+    const {
+      price_id,
+      name,
+      address_line1,
+      city,
+      state,
+      zip
+    } = req.body;
 
     if (!price_id) {
       return res.status(400).json({ error: "Falta price_id" });
     }
 
-    // Obtener el precio desde Stripe
+    // Obtener precio desde Stripe
     const price = await stripe.prices.retrieve(price_id, {
       expand: ["product"]
     });
 
-    // Crear PaymentIntent con dirección de envío
+    // Crear PaymentIntent
     const paymentIntent = await stripe.paymentIntents.create({
       amount: price.unit_amount,
       currency: price.currency,
+
+      // ⭐ Métodos manuales (NO dinámicos)
       payment_method_types: ["card", "affirm", "klarna"],
-      shipping: {  // ⭐ CLAVE: Agregar shipping address
-        name: name || 'Cliente',
+
+      // ⭐ Shipping address para Affirm en PR
+      shipping: {
+        name: name || "Cliente",
         address: {
           line1: address_line1,
           city: city,
-          state: state || 'PR',
+          state: state || "PR",
           postal_code: zip,
-          country: 'US'  // ⭐ CRÍTICO: Siempre US para Puerto Rico
+          country: "US"
         }
       },
+
       metadata: {
         price_id,
         state,
@@ -58,19 +66,7 @@ app.post("/create-payment-intent", async (req, res) => {
   }
 });
 
-    res.json({ clientSecret: paymentIntent.client_secret });
-
-  } catch (error) {
-    console.error("Error creando Payment Intent:", error);
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// ⭐ Endpoint de salud para verificar que el servidor está funcionando
-app.get("/health", (req, res) => {
-  res.json({ status: "ok" });
-});
-
+// ⭐ Puerto
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`Backend running on port ${PORT}`);
