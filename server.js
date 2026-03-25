@@ -8,7 +8,6 @@ app.use(express.json());
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
-// ⭐ ESTE ERA TU ENDPOINT REAL
 app.post("/create-payment-intent", async (req, res) => {
   try {
     const { price_id, state, zip } = req.body;
@@ -17,20 +16,12 @@ app.post("/create-payment-intent", async (req, res) => {
       return res.status(400).json({ error: "Falta price_id" });
     }
 
-    // Recupera el precio real desde Stripe
     const price = await stripe.prices.retrieve(price_id);
 
-    // ⭐ ESTE ERA EL PAYMENTINTENT CORRECTO
     const paymentIntent = await stripe.paymentIntents.create({
       amount: price.unit_amount,
       currency: "usd",
-
-      // ⭐ Affirm y Klarna SOLO funcionan si los declaras explícitamente
       payment_method_types: ["card", "affirm", "klarna"],
-
-      // ⭐ NO USAR automatic_payment_methods
-      // automatic_payment_methods: { enabled: true },
-
       shipping: {
         name: "Cliente",
         address: {
@@ -41,10 +32,7 @@ app.post("/create-payment-intent", async (req, res) => {
           country: "US"
         }
       },
-
-      metadata: {
-        price_id
-      }
+      metadata: { price_id }
     });
 
     res.json({ clientSecret: paymentIntent.client_secret });
@@ -55,4 +43,6 @@ app.post("/create-payment-intent", async (req, res) => {
   }
 });
 
-app.listen(3000, () => console.log("Servidor listo"));
+// ⭐ ESTA ES LA LÍNEA QUE ARREGLA TODO
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`Servidor listo en puerto ${PORT}`));
