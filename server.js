@@ -17,7 +17,7 @@ const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
 // ⭐ Payment Intent con métodos manuales (NO dinámicos)
 app.post("/create-payment-intent", async (req, res) => {
   try {
-    const { price_id, state, zip } = req.body;
+    const { price_id, name, address_line1, city, state, zip } = req.body;
 
     if (!price_id) {
       return res.status(400).json({ error: "Falta price_id" });
@@ -28,17 +28,35 @@ app.post("/create-payment-intent", async (req, res) => {
       expand: ["product"]
     });
 
-    // Crear PaymentIntent con métodos manuales
+    // Crear PaymentIntent con dirección de envío
     const paymentIntent = await stripe.paymentIntents.create({
       amount: price.unit_amount,
       currency: price.currency,
-      payment_method_types: ["card", "affirm", "klarna"], // ⭐ CLAVE: Desactiva métodos dinámicos
+      payment_method_types: ["card", "affirm", "klarna"],
+      shipping: {  // ⭐ CLAVE: Agregar shipping address
+        name: name || 'Cliente',
+        address: {
+          line1: address_line1,
+          city: city,
+          state: state || 'PR',
+          postal_code: zip,
+          country: 'US'  // ⭐ CRÍTICO: Siempre US para Puerto Rico
+        }
+      },
       metadata: {
         price_id,
         state,
         zip
       }
     });
+
+    res.json({ clientSecret: paymentIntent.client_secret });
+
+  } catch (error) {
+    console.error("Error creando Payment Intent:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
 
     res.json({ clientSecret: paymentIntent.client_secret });
 
