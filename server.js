@@ -27,6 +27,7 @@ app.post("/create-payment-intent", async (req, res) => {
       amount: price.unit_amount,
       currency: "usd",
 
+      // ⭐ NECESARIO PARA Affirm, Klarna, Afterpay, Apple Pay, Google Pay
       automatic_payment_methods: { enabled: true },
 
       shipping: {
