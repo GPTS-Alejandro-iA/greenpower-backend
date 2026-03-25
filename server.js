@@ -5,6 +5,8 @@ const Stripe = require("stripe");
 
 const app = express();
 
+app.use(express.static("public")); // ⭐ SIRVE TU CHECKOUT.HTML
+
 app.use(cors({
   origin: "*",
   methods: ["GET", "POST"],
