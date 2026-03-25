@@ -1,17 +1,14 @@
-require("dotenv").config();
-const express = require("express");
-const cors = require("cors");
-const Stripe = require("stripe");
+import express from "express";
+import Stripe from "stripe";
+import cors from "cors";
 
 const app = express();
-
-app.use(express.static("public"));
 app.use(cors());
 app.use(express.json());
 
-const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
-// ⭐ ENDPOINT PARA TU CHECKOUT.HTML (PaymentIntent)
+// ⭐ ESTE ERA TU ENDPOINT REAL
 app.post("/create-payment-intent", async (req, res) => {
   try {
     const { price_id, state, zip } = req.body;
@@ -20,21 +17,28 @@ app.post("/create-payment-intent", async (req, res) => {
       return res.status(400).json({ error: "Falta price_id" });
     }
 
-    // Obtener monto real desde price_id
+    // Recupera el precio real desde Stripe
     const price = await stripe.prices.retrieve(price_id);
 
+    // ⭐ ESTE ERA EL PAYMENTINTENT CORRECTO
     const paymentIntent = await stripe.paymentIntents.create({
       amount: price.unit_amount,
       currency: "usd",
 
-      // ⭐ NECESARIO PARA Affirm, Klarna, Afterpay, Apple Pay, Google Pay
-      automatic_payment_methods: { enabled: true },
+      // ⭐ Affirm y Klarna SOLO funcionan si los declaras explícitamente
+      payment_method_types: ["card", "affirm", "klarna"],
+
+      // ⭐ NO USAR automatic_payment_methods
+      // automatic_payment_methods: { enabled: true },
 
       shipping: {
+        name: "Cliente",
         address: {
-          country: "US",      // ⭐ Esto desbloquea Affirm en PR
+          line1: "Dirección",
+          city: "Ciudad",
           state: state || "PR",
-          postal_code: zip || "00901"
+          postal_code: zip || "00901",
+          country: "US"
         }
       },
 
@@ -51,44 +55,4 @@ app.post("/create-payment-intent", async (req, res) => {
   }
 });
 
-// ⭐ ENDPOINT PARA Checkout Session (si lo quieres mantener)
-app.post("/create-checkout-session", async (req, res) => {
-  try {
-    const { price_id, product_name, quantity } = req.body;
-
-    if (!price_id) {
-      return res.status(400).json({ error: "Falta price_id" });
-    }
-
-    const session = await stripe.checkout.sessions.create({
-      mode: "payment",
-
-      line_items: [
-        {
-          price: price_id,
-          quantity: quantity || 1
-        }
-      ],
-
-      success_url: "https://greenpowertech.store/pages/confirmacion?session_id={CHECKOUT_SESSION_ID}",
-      cancel_url: "https://greenpowertech.store/products",
-
-      metadata: {
-        product_name: product_name || "Producto",
-        price_id,
-        quantity: quantity || 1
-      }
-    });
-
-    res.json({ url: session.url });
-
-  } catch (error) {
-    console.error("Error creando Checkout Session:", error);
-    res.status(500).json({ error: error.message });
-  }
-});
-
-const PORT = process.env.PORT || 10000;
-app.listen(PORT, "0.0.0.0", () => {
-  console.log(`Backend running on port ${PORT}`);
-});
+app.listen(3000, () => console.log("Servidor listo"));
