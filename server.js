@@ -15,7 +15,11 @@ app.use(cors({
   allowedHeaders: ["Content-Type", "Accept"]
 }));
 
+// Parseo JSON
 app.use(express.json());
+
+// ⭐ SIRVE ARCHIVOS ESTÁTICOS (AQUÍ VIVE checkout.html)
+app.use(express.static("public"));
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
