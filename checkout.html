@@ -1,43 +1,84 @@
-<!-- checkout.html -->
 <!DOCTYPE html>
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
-    <title>Checkout Green Power</title>
+    <title>Checkout Seguro | Green Power Tech Store</title>
+
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background: #f5f7fa;
+        margin: 0;
+        padding: 0;
+      }
+
+      .container {
+        max-width: 480px;
+        margin: 60px auto;
+        background: white;
+        padding: 32px;
+        border-radius: 14px;
+        box-shadow: 0 8px 28px rgba(0, 0, 0, 0.12);
+        text-align: center;
+      }
+
+      h1 {
+        font-size: 26px;
+        margin-bottom: 12px;
+        color: #0a3d62;
+      }
+
+      p {
+        font-size: 16px;
+        color: #555;
+        margin-bottom: 28px;
+      }
+
+      #checkoutButton {
+        background: #0a3d62;
+        color: white;
+        padding: 16px;
+        width: 100%;
+        border: none;
+        border-radius: 10px;
+        font-size: 18px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: 0.2s ease;
+      }
+
+      #checkoutButton:hover {
+        background: #082f4b;
+      }
+    </style>
   </head>
+
   <body>
-    <button id="checkout-button">Ir al Checkout</button>
+    <div class="container">
+      <h1>Checkout Seguro</h1>
+      <p>
+        Procesado por Stripe.  
+        100% seguro.  
+        Tarjeta o pagos mensuales.
+      </p>
+
+      <button id="checkoutButton">Continuar al Pago</button>
+    </div>
 
     <script>
-      const backendUrl =
-        "https://greenpower-backend.onrender.com/create-checkout-session";
-
       document
-        .getElementById("checkout-button")
+        .getElementById("checkoutButton")
         .addEventListener("click", async () => {
-          try {
-            const response = await fetch(backendUrl, {
+          const response = await fetch(
+            "https://greenpower-backend.onrender.com/create-checkout-session",
+            {
               method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              // Si quieres enviar productos dinámicos, los pones aquí
-              body: JSON.stringify({
-                // line_items: [...]
-              }),
-            });
-
-            const data = await response.json();
-
-            if (data.url) {
-              window.location.href = data.url;
-            } else {
-              alert("No se recibió URL de checkout.");
+              headers: { "Content-Type": "application/json" },
             }
-          } catch (error) {
-            console.error("Error llamando al backend:", error);
-            alert("Error iniciando el checkout.");
-          }
+          );
+
+          const data = await response.json();
+          window.location.href = data.url;
         });
     </script>
   </body>
