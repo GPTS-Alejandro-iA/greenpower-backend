@@ -1,60 +1,61 @@
-// server.js
-import express from "express";
-import cors from "cors";
-import Stripe from "stripe";
-import dotenv from "dotenv";
-
-dotenv.config();
+const express = require("express");
+const Stripe = require("stripe");
+const cors = require("cors");
 
 const app = express();
-
-// Middleware básico
 app.use(cors());
 app.use(express.json());
 
-// Clave secreta de Stripe desde .env
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-  apiVersion: "2024-06-20", // o la versión que tengas activa en tu cuenta
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+
+app.get("/", (req, res) => {
+  res.send("Green Power Tech Backend is running");
 });
 
-// Endpoint mínimo y estable para crear sesión de Checkout
 app.post("/create-checkout-session", async (req, res) => {
   try {
-    // Si viene algo del frontend, lo puedes usar; si no, usamos un fallback estable
-    const { line_items } = req.body || {};
+    const { price_id } = req.body;
+
+    if (!price_id) {
+      return res.status(400).json({ error: "Missing price_id" });
+    }
 
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
-      payment_method_types: ["card"],
-      // Si no vienen line_items válidos, usamos un producto fijo de prueba
-      line_items:
-        line_items && Array.isArray(line_items) && line_items.length > 0
-          ? line_items
-          : [
-              {
-                price_data: {
-                  currency: "usd",
-                  product_data: {
-                    name: "Green Power Test Item",
-                  },
-                  unit_amount: 10000, // 100.00 USD
-                },
-                quantity: 1,
-              },
-            ],
-      success_url: "https://greenpowertechstore.com/pages/success",
-      cancel_url: "https://greenpowertechstore.com/pages/cancel",
+
+      payment_method_types: [
+        "card",
+        "affirm",
+        "klarna",
+        "amazon_pay"
+      ],
+
+      shipping_address_collection: {
+        allowed_countries: ["US"]
+      },
+
+      billing_address_collection: "required",
+      locale: "auto",
+
+      line_items: [
+        {
+          price: price_id,
+          quantity: 1
+        }
+      ],
+
+      success_url: "https://greenpowertech.store",
+      cancel_url: "https://greenpowertech.store"
     });
 
-    return res.status(200).json({ url: session.url });
+    res.json({ url: session.url });
   } catch (error) {
-    console.error("Error creando sesión de checkout:", error);
-    return res.status(500).json({ error: "No se pudo crear la sesión" });
+    console.error("Stripe error:", error);
+    res.status(500).json({ error: error.message });
   }
 });
 
-// Puerto
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 4242;
 app.listen(PORT, () => {
-  console.log(`Backend escuchando en puerto ${PORT}`);
+  console.log(`Servidor corriendo en puerto ${PORT}`);
 });
