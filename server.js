@@ -10,7 +10,7 @@ app.use(express.json());
 
 const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
 
-// ⭐ PaymentIntent FINAL con shipping + métodos manuales
+// ⭐ ENDPOINT CORRECTO Y VALIDADO
 app.post("/create-payment-intent", async (req, res) => {
   try {
     const {
