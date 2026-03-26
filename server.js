@@ -1,73 +1,60 @@
-require("dotenv").config();
-const express = require("express");
-const cors = require("cors");
-const Stripe = require("stripe");
+// server.js
+import express from "express";
+import cors from "cors";
+import Stripe from "stripe";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 const app = express();
 
+// Middleware básico
 app.use(cors());
 app.use(express.json());
 
-const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
+// Clave secreta de Stripe desde .env
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+  apiVersion: "2024-06-20", // o la versión que tengas activa en tu cuenta
+});
 
-// ⭐ ENDPOINT CORRECTO Y VALIDADO
-app.post("/create-payment-intent", async (req, res) => {
+// Endpoint mínimo y estable para crear sesión de Checkout
+app.post("/create-checkout-session", async (req, res) => {
   try {
-    const {
-      price_id,
-      name,
-      address_line1,
-      city,
-      state,
-      zip
-    } = req.body;
+    // Si viene algo del frontend, lo puedes usar; si no, usamos un fallback estable
+    const { line_items } = req.body || {};
 
-    if (!price_id) {
-      return res.status(400).json({ error: "Falta price_id" });
-    }
-
-    // Obtener precio desde Stripe
-    const price = await stripe.prices.retrieve(price_id, {
-      expand: ["product"]
+    const session = await stripe.checkout.sessions.create({
+      mode: "payment",
+      payment_method_types: ["card"],
+      // Si no vienen line_items válidos, usamos un producto fijo de prueba
+      line_items:
+        line_items && Array.isArray(line_items) && line_items.length > 0
+          ? line_items
+          : [
+              {
+                price_data: {
+                  currency: "usd",
+                  product_data: {
+                    name: "Green Power Test Item",
+                  },
+                  unit_amount: 10000, // 100.00 USD
+                },
+                quantity: 1,
+              },
+            ],
+      success_url: "https://greenpowertechstore.com/pages/success",
+      cancel_url: "https://greenpowertechstore.com/pages/cancel",
     });
 
-    // Crear PaymentIntent
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount: price.unit_amount,
-      currency: price.currency,
-
-      // ⭐ Métodos manuales (NO dinámicos)
-      payment_method_types: ["card", "affirm", "klarna"],
-
-      // ⭐ Shipping address para Affirm en PR
-      shipping: {
-        name: name || "Cliente",
-        address: {
-          line1: address_line1,
-          city: city,
-          state: state || "PR",
-          postal_code: zip,
-          country: "US"
-        }
-      },
-
-      metadata: {
-        price_id,
-        state,
-        zip
-      }
-    });
-
-    res.json({ clientSecret: paymentIntent.client_secret });
-
+    return res.status(200).json({ url: session.url });
   } catch (error) {
-    console.error("Error creando Payment Intent:", error);
-    res.status(500).json({ error: error.message });
+    console.error("Error creando sesión de checkout:", error);
+    return res.status(500).json({ error: "No se pudo crear la sesión" });
   }
 });
 
-// ⭐ Puerto
-const PORT = process.env.PORT || 10000;
-app.listen(PORT, "0.0.0.0", () => {
-  console.log(`Backend running on port ${PORT}`);
+// Puerto
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Backend escuchando en puerto ${PORT}`);
 });
