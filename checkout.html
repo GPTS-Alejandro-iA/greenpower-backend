@@ -1,1 +1,44 @@
+<!-- checkout.html -->
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Checkout Green Power</title>
+  </head>
+  <body>
+    <button id="checkout-button">Ir al Checkout</button>
 
+    <script>
+      const backendUrl =
+        "https://greenpower-backend.onrender.com/create-checkout-session";
+
+      document
+        .getElementById("checkout-button")
+        .addEventListener("click", async () => {
+          try {
+            const response = await fetch(backendUrl, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              // Si quieres enviar productos dinámicos, los pones aquí
+              body: JSON.stringify({
+                // line_items: [...]
+              }),
+            });
+
+            const data = await response.json();
+
+            if (data.url) {
+              window.location.href = data.url;
+            } else {
+              alert("No se recibió URL de checkout.");
+            }
+          } catch (error) {
+            console.error("Error llamando al backend:", error);
+            alert("Error iniciando el checkout.");
+          }
+        });
+    </script>
+  </body>
+</html>
