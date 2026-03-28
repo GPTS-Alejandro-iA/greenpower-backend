@@ -7,7 +7,7 @@ app.use(cors());
 app.use(express.json());
 
 // ------------------------------
-// 🔥 NUEVO: Variables para Meta y Google
+// 🔥 Variables para Meta y Google
 // ------------------------------
 const META_PIXEL_ID = process.env.META_PIXEL_ID;
 const META_ACCESS_TOKEN = process.env.META_ACCESS_TOKEN;
@@ -16,7 +16,7 @@ const GA4_MEASUREMENT_ID = process.env.GA4_MEASUREMENT_ID;
 const GA4_API_SECRET = process.env.GA4_API_SECRET;
 
 // ------------------------------
-// 🔥 NUEVO: Helpers para enviar eventos
+// 🔥 Helpers para enviar eventos
 // ------------------------------
 async function sendMetaEvent(eventName, payload = {}) {
   try {
@@ -68,15 +68,17 @@ async function sendGA4Event(eventName, clientId, params = {}) {
 }
 
 // ------------------------------
-// 🔥 FIN DE LOS BLOQUES NUEVOS
+// 🔥 Stripe
 // ------------------------------
-
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 app.get("/", (req, res) => {
   res.send("Green Power Tech Backend is running");
 });
 
+// ------------------------------
+// 🔥 Crear sesión de checkout
+// ------------------------------
 app.post("/create-checkout-session", async (req, res) => {
   try {
     const { price_id } = req.body;
@@ -114,7 +116,7 @@ app.post("/create-checkout-session", async (req, res) => {
     });
 
     // ------------------------------
-    // 🔥 NUEVO: Enviar eventos de inicio de checkout
+    // 🔥 begin_checkout
     // ------------------------------
     const value = session.amount_total ? session.amount_total / 100 : undefined;
     const currency = session.currency ? session.currency.toUpperCase() : "USD";
@@ -127,7 +129,6 @@ app.post("/create-checkout-session", async (req, res) => {
       value,
       currency
     });
-    // ------------------------------
 
     res.json({ url: session.url });
   } catch (error) {
@@ -137,7 +138,7 @@ app.post("/create-checkout-session", async (req, res) => {
 });
 
 // ------------------------------
-// 🔥 NUEVO: Webhook de Stripe para Purchase
+// 🔥 Webhook de Stripe (por si algún día usas Stripe Checkout)
 // ------------------------------
 app.post("/stripe-webhook", express.raw({ type: "application/json" }), (req, res) => {
   const sig = req.headers["stripe-signature"];
@@ -160,12 +161,10 @@ app.post("/stripe-webhook", express.raw({ type: "application/json" }), (req, res
     const value = session.amount_total ? session.amount_total / 100 : undefined;
     const currency = session.currency ? session.currency.toUpperCase() : "USD";
 
-    // META: Purchase
     sendMetaEvent("Purchase", {
       custom_data: { value, currency }
     });
 
-    // GA4: purchase
     sendGA4Event("purchase", null, {
       value,
       currency
@@ -174,10 +173,42 @@ app.post("/stripe-webhook", express.raw({ type: "application/json" }), (req, res
 
   res.sendStatus(200);
 });
-// ------------------------------
 
+// ------------------------------
+// 🔥 NUEVO: Webhook de Shopify (ESTE ES EL QUE IMPORTA)
+// ------------------------------
+app.post("/shopify-webhook", express.json(), async (req, res) => {
+  try {
+    const order = req.body;
+
+    const value = order.total_price ? parseFloat(order.total_price) : undefined;
+    const currency = order.currency || "USD";
+
+    // GA4: purchase
+    await sendGA4Event("purchase", null, {
+      transaction_id: order.id,
+      value,
+      currency
+    });
+
+    // META: Purchase
+    await sendMetaEvent("Purchase", {
+      custom_data: { value, currency }
+    });
+
+    res.sendStatus(200);
+  } catch (err) {
+    console.error("Shopify webhook error:", err);
+    res.sendStatus(500);
+  }
+});
+
+// ------------------------------
+// 🔥 Servidor
+// ------------------------------
 const PORT = process.env.PORT || 4242;
 app.listen(PORT, () => {
   console.log(`Servidor corriendo en puerto ${PORT}`);
 });
+
 
